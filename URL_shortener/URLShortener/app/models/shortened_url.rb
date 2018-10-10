@@ -17,6 +17,16 @@ class ShortenedURL < ApplicationRecord
     primary_key: :id,
     class_name: :User
 
+  has_many  :visits,
+    foreign_key:  :short_url_id,
+    primary_key:  :id,
+    class_name:   :Visit
+
+  has_many  :visitors,
+    -> { distinct },
+    through:  :visits,
+    source:  :visitor
+
 
   #helper method generates random string
   #method to pass in user and long_url to call create! for a new shortened_url instance
@@ -32,4 +42,19 @@ class ShortenedURL < ApplicationRecord
     token = self.random_code
     ShortenedURL.create!(long_url: long_url, short_url: token, user_id: user.id)
   end
+
+
+  def num_clicks
+    visits.count
+  end
+
+  def num_uniques
+    visits.select(:user_id).distinct.count
+  end
+
+  def num_recent_uniques
+     visits.select(:user_id).where('created_at > ?', 10.minutes.ago).distinct.count
+  end
+
+
 end
